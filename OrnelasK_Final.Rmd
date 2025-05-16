@@ -8,22 +8,26 @@ output: github_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
-# Introduction 
 
-The purpose of this project was to 
-  1. Clean Pennie Logemann's data to match the National Phenology Network's format to be uploaded to their website.    2. Use Pennie's data to investigate the relationship between First Flowering Date (FFD) and weather + time
-  3. See how the results of a a smaller dataset collected in the same area as a larger dataset differ                     (Miller-Rushing and Primack 2008) 
+# Introduction
 
-The steps to complete this include reorganizing the data, adding a TSN to each corresponding species via for loops, filter for unique species, joining data sets, and creating plots. 
+The purpose of this project was to
+
+1.  Clean Pennie Logemann's data to match the National Phenology Network's format to be uploaded to their website. 2. Use Pennie's data to investigate the relationship between First Flowering Date (FFD) and weather + time
+2.  See how the results of a a smaller dataset collected in the same area as a larger dataset differ (Miller-Rushing and Primack 2008)
+
+The steps to complete this include reorganizing the data, adding a TSN to each corresponding species via for loops, filter for unique species, joining data sets, and creating plots.
 
 # Data Wrangling
+
 ```{r}
 #install.packages("tidyverse")
 ## week 3 intro to tidyverse
 library(tidyverse)
 ```
 
-## Read csv file 
+## Read csv file
+
 ```{r}
 ## week 4 intro to tidyverse - data tables
 #install.packages("readr")
@@ -31,7 +35,8 @@ library(readr)
 Concord_data <- read_csv("raw_data/Observations_of_flowering_phenology_in_Concord__Massachusetts__USA__1963-1993.csv")
 ```
 
-## Pivot data from wide to long format 
+## Pivot data from wide to long format
+
 ```{r}
 ## week 6 making data tidy
 #install.packages("dplyr")
@@ -43,9 +48,8 @@ Concord_long <- Concord_data %>%
     values_to = "date")
 ```
 
+## Separate Phenophase by start and end
 
-
-## Separate Phenophase by start and end 
 ```{r}
 ## week 4 aggregation and week 7 strings
 ## X is only removed in Posit Cloud - remove the X from the beginning of our year 
@@ -57,6 +61,7 @@ Concord_long <- Concord_long %>%
 ```
 
 ## Remove "s" and "e" from year
+
 ```{r}
 ## week 7 strings 
 Concord_long$year <-  
@@ -64,7 +69,8 @@ Concord_long$year <-
     Concord_long$year, "[es]")
 ```
 
-## Extract the day from date column 
+## Extract the day from date column
+
 ```{r}
 ## week 3 pipes
 Concord_long <- Concord_long %>%
@@ -73,6 +79,7 @@ Concord_long <- Concord_long %>%
 ```
 
 ## Remove "-" from date then make dates into numbers not text
+
 ```{r}
 ## week 4 aggregation and week 3 pipes
 Concord_long <- Concord_long %>%
@@ -90,6 +97,7 @@ Concord_long <- Concord_long %>%
 ```
 
 ## Create new date column using YMD format
+
 ```{r}
 ## week 7 date and times
 Concord_long <- Concord_long %>% 
@@ -97,12 +105,14 @@ Concord_long <- Concord_long %>%
 ```
 
 ## Erase month, day, year column
+
 ```{r}
 ## needs to be removed as it would be the best data wrangling pratices 
 Concord_long <- Concord_long [-c(4,5,6)]
 ```
 
 ## Add kingdom column
+
 ```{r}
 ## week 4 aggregation
 Concord_long <- Concord_long %>% 
@@ -111,7 +121,8 @@ Concord_long <- Concord_long %>%
 Concord_long <-  Concord_long %>% relocate(Kingdom)
 ```
 
-## Remove any rows that have NA in observation date column 
+## Remove any rows that have NA in observation date column
+
 ```{r}
 ## week 6 tidy data 
 Concord_long <- 
@@ -120,6 +131,7 @@ Concord_long <-
 ```
 
 ## Replace S and E with Start and End
+
 ```{r}
 ## week 7 strings 
 Concord_long$Pheno <-  
@@ -129,7 +141,8 @@ Concord_long$Pheno <-
   str_replace(Concord_long$Pheno, "e", "End")
 ```
 
-## Add complete scientific name 
+## Add complete scientific name
+
 ```{r}
 ## week 3 pipes, week 4 aggregation, week 7 strings
 Concord_long <- Concord_long %>%
@@ -141,7 +154,8 @@ Concord_long <-  Concord_long %>% relocate(Scientific_name,.after = Species)
 
 ```
 
-## add column for lat and long
+## Add column for lat and long
+
 ```{r}
 ## week 4 aggregation
 Concord_long <- Concord_long %>%
@@ -151,7 +165,8 @@ Concord_long <- Concord_long %>%
   mutate(Latitude = "42.4403334")
 ```
 
-## attach tsn number 
+## Attach tsn number
+
 ```{r}
 ## week 4 aggregation, week 7 strings
 ## first create a test df that can be joined to concord long df. 
@@ -171,21 +186,23 @@ test_df <- test_df %>%
 ## Line 172 and 173 cause issues when knitting 
 ## Line 177 should help with knitting the project
 
-#test_df <- test_df %>%
-#  mutate(TSN = get_tsn(test_df$Scientific_name, rows = 1))
+test_df <- test_df %>%
+  mutate(TSN = get_tsn(test_df$Scientific_name, rows = 1))
 
-
+## this was my attempt to try and fix it
 test_df <- readRDS("test_df.rds")
 
 ```
 
-## Create new df that only has species where TSN = NA 
+## Create new df that only has species where TSN = NA
+
 ```{r}
 ## week 6 tidy data
 NA_TSN <- test_df[is.na(test_df$TSN),]
 ```
 
-## Use fuzzymatch from worldflora package to get the correct name for NA TSN in test_df 
+## Use fuzzymatch from worldflora package to get the correct name for NA TSN in test_df
+
 ```{r}
 ## this will  compare TSN from test_df and worldflora to make sure no one is different 
 ## week 4 aggregation 
@@ -222,11 +239,10 @@ one_to_one_TSN <- one_to_one_TSN %>%
 ```
 
 ## Rename the scientific_name column in one_to_one_TSN to match test_df
+
 ```{r}
 colnames(one_to_one_TSN)[colnames(one_to_one_TSN) == 'scientificName'] <- 'Scientific_name'
 ```
-
-
 
 ```{r}
 ## Change TSN from chr to numeric
@@ -245,7 +261,9 @@ one_to_one_TSN <-  one_to_one_TSN %>%
 ```
 
 ## Rename all misspelled Scientific_name in test_df to correct name located in one_to_one_TSN
+
 Replace all NA values in test_df with values from one_to_one_TSN
+
 ```{r}
 ## week 13 iteration
 misspelled <- one_to_one_TSN$spec.name
@@ -269,7 +287,8 @@ for (i in 1:nrow(test_df)){
 }
 ```
 
-## Fix all misspelled names in Concord_Long 
+## Fix all misspelled names in Concord_Long
+
 ```{r}
 
 Concord_corrected_name <- read.csv("supporting_files/corrected_taxonomy.csv")
@@ -286,8 +305,8 @@ for (i in 1:nrow(Concord_long)) {
 
 ```
 
-
 ## Final step for data wrangaling
+
 ```{r}
 ## week 4 joins
 Clean_Concord_Data <- full_join(Concord_long,test_df)
@@ -298,12 +317,14 @@ write_csv(Clean_Concord_Data,"clean_data/Pennie_Clean_Data.csv")
 # Data Analysis
 
 ## Read in clean data
+
 ```{r}
 ## Read Pennie's  .csv into R as an object
 Pennie_df <- read_csv("clean_data/Pennie_Clean_Data.csv")
 ```
 
-## Seperating DOY and year into its own columns 
+## Separating DOY and year into its own columns
+
 ```{r}
 ## week 7 date and times
 ## Add a DOY into the original Pennie_df to help with finding first flower data later
@@ -318,6 +339,7 @@ Pennie_df <- Pennie_df %>%
 ```
 
 ## Remove year from data on pennie df
+
 ```{r}
 ## week 7 strings
 Pennie_Timeline_df <- Pennie_df[c("Scientific_name","Observation_date")]
@@ -329,7 +351,8 @@ Pennie_Timeline_df <- Pennie_Timeline_df %>%
 Pennie_Timeline_df <- Pennie_Timeline_df[-c(2)]
 ```
 
-## Create a new dataframe that contains unique species 
+## Create a new data frame that contains unique species
+
 ```{r}
 ## week 4 aggregation
 Pennie_Timeline_df_unique_species <-  Pennie_Timeline_df %>% 
@@ -337,7 +360,6 @@ Pennie_Timeline_df_unique_species <-  Pennie_Timeline_df %>%
   count()
 
 ```
-
 
 ```{r}
 ## do same process but filter where pheno =  start 
@@ -349,6 +371,7 @@ Pennie_Timeline_Start <- Pennie_df %>%
 ```
 
 ## Blue Hill Observatory Weather Data
+
 ```{r}
 ## read in data
 weather <- read_csv("raw_data/BlueHillObservatory_Temperature_Mean_2828_Monthly_v2.4.csv", skip = 4, col_names = TRUE) |> 
@@ -358,7 +381,8 @@ weather <- read_csv("raw_data/BlueHillObservatory_Temperature_Mean_2828_Monthly_
 
 # Early Flowering Species
 
-##Plot start dates for only species with >= 10 years of data
+## Plot start dates for only species with \>= 10 years of data
+
 ```{r}
 ## week 4 aggregation and week 4 joins
 Pennie_Start_10 <- Pennie_Timeline_Start |> 
@@ -373,6 +397,7 @@ start_10years |> group_by(Scientific_name) |> count()
 ```
 
 ## Species that flower by the end of May at least once in the dataset
+
 ```{r}
 ## week 3 data tables and week 4 aggregation
 pre_june_species <- start_10years |> 
@@ -399,6 +424,7 @@ prejune_10years_1970 <- semi_join(start_10years_prejune, early_species_1970, joi
 ```
 
 ## Subtract the DOY from each species from doy of benchmark_mean = FFD
+
 ```{r}
 ## week 4 aggregation, week 3 data tables, week 4 joins
 
@@ -418,6 +444,7 @@ prejune_FFD_mean_year <- prejune_FFD_df %>%
 # Plots
 
 ## Plot FFD
+
 ```{r}
 ## week 5 data visiualization 
 #install.packages("ggpmisc")
@@ -445,6 +472,7 @@ ggsave("plots/Prejune_Mean_FFD_Plot.png", prejune_meanFFD_plot)
 ```
 
 ## Combine BH Weather and FFD
+
 ```{r}
 ## week 4 joins
 ## filter by -30 and 30 to remove any extreme outliers
@@ -453,6 +481,7 @@ Prejune_FFD_weather <- left_join(prejune_FFD_df, weather, join_by(Year_prejune =
 ```
 
 ## Plot FFD and January weather
+
 ```{r}
 ## week 5 data visulatization 
 jan_lm <- lm(FFD ~ January, data = Prejune_FFD_weather)
@@ -478,6 +507,7 @@ ggsave("plots/Prejune_FFD_Jan.png", Prejune_FFD_Jan_Plot)
 ```
 
 ## Plot FFD and February weather
+
 ```{r}
 ## week 5 data visulatization 
 feb_lm <- lm(FFD ~ February, data = Prejune_FFD_weather)
@@ -502,6 +532,7 @@ ggsave("plots/Prejune_FFD_Feb.png", Prejune_FFD_Feb_Plot)
 ```
 
 ## Plot FFD and March weather
+
 ```{r}
 ## week 5 data visulatization 
 march_lm <- lm(FFD ~ March, data = Prejune_FFD_weather)
@@ -525,6 +556,7 @@ ggsave("plots/Prejune_FFD_Mar.png", Prejune_FFD_Mar_Plot)
 ```
 
 ## Plot FFD and April weather
+
 ```{r}
 ## week 5 data visulatization 
 april_lm <- lm(FFD ~ April, data = Prejune_FFD_weather)
@@ -550,6 +582,7 @@ ggsave("plots/Prejune_FFD_Apr.png", Prejune_FFD_Apr_Plot)
 ```
 
 ## Plot FFD and May weather
+
 ```{r}
 ## week 5 data visulatization 
 may_lm <- lm(FFD ~ May, data = Prejune_FFD_weather)
@@ -573,15 +606,16 @@ Prejune_FFD_May_Plot <- ggplot(Prejune_FFD_weather, aes(May, FFD)) +
 ggsave("plots/Prejune_FFD_May.png", Prejune_FFD_May_Plot)
 ```
 
-## Find avaerage DOY within Prejune_FFD_weather
+## Find average DOY within Prejune_FFD_weather
+
 ```{r}
 ## week 4 aggregation
 Prejune_FFD_weather %>%
   summarise(avg_doy = mean(DOY_prejune))
 ```
 
-
 ## Overlay the ggplots
+
 ```{r}
 install.packages("patchwork")
 library(patchwork)
@@ -590,4 +624,3 @@ monthly <- Prejune_FFD_Jan_Plot / Prejune_FFD_Feb_Plot / Prejune_FFD_Mar_Plot / 
 
 ggsave("plots/all_months.png", monthly, width = 7, height = 21)
 ```
-
